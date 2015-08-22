@@ -32,32 +32,25 @@ Load the Component into the controller of your choice.
 		'PaypalWPP.PaypalWPP',
 	);
 ```
-
-Next urlencode your data and send it to the component using a method and an nvp.  For doing payments using DoDirectPayment (https://developer.paypal.com/webapps/developer/docs/classic/api/merchant/DoDirectPayment_API_Operation_NVP/) the following example would work:
+CakePHP's HTTPSOCKET Object urlencodes everything for us.  For doing payments using DoDirectPayment (https://developer.paypal.com/webapps/developer/docs/classic/api/merchant/DoDirectPayment_API_Operation_NVP/) the following example would work:
 
 ```
 	public function add() {
-		if ($this->request->is('post') || $this->request->is('put')) {
-			$firstName = urlencode($this->request->data['Sale']['first_name']);
-			$lastName = urlencode($this->request->data['Sale']['last_name']);
-			$creditCardType = urlencode($this->request->data['Sale']['card_type']);
-			$creditCardNumber = urlencode($this->request->data['Sale']['card_number']);
-			$expDateMonth = $this->request->data['Sale']['exp']['month'];
-			$padDateMonth = urlencode(str_pad($expDateMonth, 2, '0', STR_PAD_LEFT));
-			$expDateYear = urlencode($this->request->data['Sale']['exp']['year']);
-			$cvv2Number = urlencode($this->request->data['Sale']['cvv2']);
-			$amount = urlencode($this->request->data['Sale']['amount']);
+		if ($this->request->is('post') || $this->request->is('put')) {	
+			$payment_information = $this->request->data['Sale'];
+			
 			$nvp = '&PAYMENTACTION=Sale';
-			$nvp .= '&AMT='.$amount;
-			$nvp .= '&CREDITCARDTYPE='.$creditCardType;
-			$nvp .= '&ACCT='.$creditCardNumber;
-			$nvp .= '&CVV2='.$cvv2Number;
-			$nvp .= '&EXPDATE='.$padDateMonth.$expDateYear;
-			$nvp .= '&FIRSTNAME='.$firstName;
-			$nvp .= '&LASTNAME='.$lastName;
+			$nvp .= '&AMT='.$payment_information['amount'];
+			$nvp .= '&CREDITCARDTYPE='.$payment_information['card_type'];
+			$nvp .= '&ACCT='.$payment_information['card_number'];
+			$nvp .= '$CVV2='.$payment_information['cvv2'];
+			$nvp .= 'EXPDATE='.$payment_information['expiration_month'].$payment_information['expiration_year'];
+			$nvp .= '&FIRSTNAME='.$payment_information['first_name'];
+			$nvp .= '&LASTNAME='.$payment_information['last_name'];
 			$nvp .= '&COUNTRYCODE=US&CURRENCYCODE=USD';
 			
 			$response = $this->PaypalWPP->wpp_hash('DoDirectPayment', $nvp);
+			die();
 			if ($response['ACK'] == 'Success') {
 				$this->Session->setFlash('Payment Successful');
 			} else {
